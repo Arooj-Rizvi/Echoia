@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tongue — Voice Translation Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1a1035;
+    --panel: #241849;
+    --panel-2: #2d1f5c;
+    --line: #40316f;
+    --text: #f3effc;
+    --muted: #ab9dd6;
+    --amber: #ffb84d;
+    --teal: #c084fc;
+    --coral: #ff6ec7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(192,132,252,0.16), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(255,110,199,0.13), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:48px 20px 80px;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+
+  header{margin-bottom:36px;}
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--teal); font-weight:600; margin-bottom:10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;}
+  .brand-row{display:flex; align-items:center; gap:14px; margin-bottom:14px;}
+  .brand-mark{
+    width:46px; height:46px; border-radius:14px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--teal), var(--coral));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 22px rgba(192,132,252,.35);
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(30px,5vw,44px);
+    line-height:1.08; margin:0 0 10px; font-weight:700; letter-spacing:-.01em;
+  }
+  h1 span{color:var(--amber);}
+  .sub{color:var(--muted); font-size:15px; max-width:520px; line-height:1.55;}
+  .env-banner{
+    display:none; align-items:center; gap:10px;
+    background:rgba(255,110,199,.1); border:1px solid rgba(255,110,199,.35);
+    color:#ffd7ef; font-size:12.5px; line-height:1.5;
+    padding:12px 14px; border-radius:12px; margin-top:16px;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:28px;
+    margin-top:28px;
+    box-shadow:0 20px 60px rgba(10,5,30,.35), inset 0 1px 0 rgba(255,255,255,.03);
+    position:relative;
+  }
+  .orb{
+    position:fixed; border-radius:50%; filter:blur(60px); z-index:-1; pointer-events:none;
+    animation:float 12s ease-in-out infinite;
+  }
+  .orb1{width:280px; height:280px; background:rgba(192,132,252,.25); top:-80px; left:-60px;}
+  .orb2{width:220px; height:220px; background:rgba(255,110,199,.2); bottom:10%; right:-40px; animation-delay:-6s;}
+  @keyframes float{0%,100%{transform:translate(0,0);}50%{transform:translate(20px,-24px);}}
+
+  .lang-row{
+    display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  select{
+    background:var(--panel-2);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    flex:1;
+    min-width:140px;
+  }
+  .swap-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--teal);
+    width:38px; height:38px; border-radius:50%;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .25s ease, border-color .2s ease;
+    flex-shrink:0;
+  }
+  .swap-btn:hover{border-color:var(--teal); transform:rotate(180deg);}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:680px){.grid{grid-template-columns:1fr;}}
+
+  .field{position:relative;}
+  .field-label{
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px; display:block; font-weight:600;
+  }
+  textarea{
+    width:100%; min-height:150px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    color:var(--text);
+    padding:14px 14px 44px;
+    font-family:'Inter',sans-serif;
+    font-size:15px; line-height:1.5;
+    resize:vertical;
+  }
+  textarea:focus{outline:2px solid var(--teal); outline-offset:-1px;}
+  textarea::placeholder{color:#546879;}
+  textarea[readonly]{color:#cfe8e2;}
+
+  .field-actions{
+    position:absolute; bottom:10px; left:10px; right:10px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .icon-btn{
+    background:var(--panel);
+    border:1px solid var(--line);
+    color:var(--muted);
+    width:32px; height:32px; border-radius:8px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:.15s ease;
+  }
+  .icon-btn:hover{color:var(--text); border-color:var(--teal);}
+  .icon-btn.recording{color:var(--coral); border-color:var(--coral); animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,122,107,.4);}50%{box-shadow:0 0 0 6px rgba(255,122,107,0);}}
+  .char-count{font-size:11px; color:var(--muted);}
+
+  .actions-row{
+    display:flex; justify-content:center; margin:24px 0 6px;
+  }
+  .translate-btn{
+    background:var(--amber);
+    color:#1a1204;
+    border:none;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 34px;
+    border-radius:12px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:9px;
+    transition:transform .15s ease, box-shadow .2s ease;
+    box-shadow:0 6px 18px rgba(245,166,35,.18);
+  }
+  .translate-btn:hover{transform:translateY(-1px); box-shadow:0 8px 22px rgba(245,166,35,.28);}
+  .translate-btn:disabled{opacity:.5; cursor:progress; transform:none;}
+
+  .status{
+    text-align:center; font-size:12.5px; color:var(--muted); min-height:18px; margin-top:8px;
+  }
+  .status.err{color:var(--coral);}
+
+  footer{
+    margin-top:40px; padding-top:20px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-size:12px; color:var(--muted);
+  }
+  .waveform{display:flex; align-items:flex-end; gap:2px; height:14px;}
+  .waveform span{width:2px; background:var(--teal); border-radius:1px; animation:wave 1s ease-in-out infinite;}
+  .waveform span:nth-child(1){height:40%; animation-delay:0s;}
+  .waveform span:nth-child(2){height:100%; animation-delay:.15s;}
+  .waveform span:nth-child(3){height:60%; animation-delay:.3s;}
+  .waveform span:nth-child(4){height:80%; animation-delay:.45s;}
+  .waveform span:nth-child(5){height:30%; animation-delay:.6s;}
+  @keyframes wave{0%,100%{transform:scaleY(.4);}50%{transform:scaleY(1);}}
+
+  .detect-row{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .detect-row input{accent-color:var(--teal);}
+  .detect-row label{font-size:12.5px; color:var(--muted); cursor:pointer;}
+  .detect-badge{
+    font-size:10.5px; background:rgba(45,212,191,.12); color:var(--teal);
+    padding:2px 8px; border-radius:20px; display:none; font-weight:600; letter-spacing:.03em;
+  }
+
+  .history-panel{
+    margin-top:22px; padding-top:20px; border-top:1px solid var(--line);
+  }
+  .history-title{
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:12px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .history-title button{
+    background:none; border:none; color:var(--muted); font-size:11px;
+    cursor:pointer; text-decoration:underline; padding:0;
+  }
+  .history-list{display:flex; flex-direction:column; gap:8px;}
+  .history-empty{color:#546879; font-size:13px; font-style:italic;}
+  .history-item{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; cursor:pointer; transition:border-color .15s ease;
+    display:flex; flex-direction:column; gap:3px;
+  }
+  .history-item:hover{border-color:var(--teal);}
+  .history-item .h-top{
+    display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .history-item .h-text{font-size:13.5px; color:var(--text); line-height:1.4;}
+  .history-item .h-arrow{font-size:13px; color:var(--muted); margin:0 4px;}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="wrap">
+  <header>
+    <div class="brand-row">
+      <div class="brand-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M4 5h9M8.5 3v2M6 5c0 4 2 6.5 5.5 8M11 5c-.7 3-2.5 5.5-5 7.2M13 21l4-9 4 9M14.5 18h5" stroke="#1a1035" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="eyebrow">InternGrow · AI Track · Task 01</div>
+    </div>
+    <h1>Speak it. <span>Hear it back</span> in another tongue.</h1>
+    <p class="sub">A voice-enabled translation assistant — type or speak your text, pick a language pair, and get an instant translation you can also listen to out loud.</p>
+    <div class="env-banner" id="envBanner"></div>
+  </header>
+
+  <div class="panel">
+    <div class="lang-row">
+      <select id="sourceLang" aria-label="Source language"></select>
+      <button class="swap-btn" id="swapBtn" title="Swap languages" aria-label="Swap languages">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 7h13l-4-4M17 17H4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <select id="targetLang" aria-label="Target language"></select>
+    </div>
+    <div class="detect-row">
+      <input type="checkbox" id="autoDetect">
+      <label for="autoDetect">Auto-detect input language</label>
+      <span class="detect-badge" id="detectBadge"></span>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <span class="field-label">You say</span>
+        <textarea id="inputText" placeholder="Type here, or tap the mic to speak..."></textarea>
+        <div class="field-actions">
+          <button class="icon-btn" id="micBtn" title="Speak your input" aria-label="Start voice input">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M19 11a7 7 0 01-14 0M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <span class="char-count" id="charCount">0 chars</span>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">Translation</span>
+        <textarea id="outputText" placeholder="Your translation will appear here..." readonly></textarea>
+        <div class="field-actions">
+          <button class="icon-btn" id="speakBtn" title="Listen to translation" aria-label="Play translation audio">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M17 8a5 5 0 010 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="icon-btn" id="copyBtn" title="Copy translation" aria-label="Copy translation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="translate-btn" id="translateBtn">
+        Translate <span class="waveform" id="waveform" style="display:none;"><span></span><span></span><span></span><span></span><span></span></span>
+      </button>
+    </div>
+    <div class="status" id="statusMsg"></div>
+
+    <div class="history-panel">
+      <div class="history-title">
+        <span>Recent translations</span>
+        <button id="clearHistory">Clear</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <span class="history-empty">Your translated phrases will show up here for quick reuse.</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Built for InternGrow AI Track — Module 1</span>
+    <span>Speech powered by your browser · Translation via MyMemory API</span>
+  </footer>
+</div>
+
+<script>
+  // ---- Language list (code : label) ----
+  const LANGUAGES = {
+    en:"English", ur:"Urdu", ar:"Arabic", fr:"French", es:"Spanish",
+    de:"German", zh:"Chinese", hi:"Hindi", tr:"Turkish", ru:"Russian",
+    ja:"Japanese", ko:"Korean", it:"Italian", pt:"Portuguese", fa:"Persian"
+  };
+  // BCP-47 tags for speech APIs (subset, fall back to code if missing)
+  const SPEECH_TAGS = {
+    en:"en-US", ur:"ur-PK", ar:"ar-SA", fr:"fr-FR", es:"es-ES",
+    de:"de-DE", zh:"zh-CN", hi:"hi-IN", tr:"tr-TR", ru:"ru-RU",
+    ja:"ja-JP", ko:"ko-KR", it:"it-IT", pt:"pt-PT", fa:"fa-IR"
+  };
+
+  const sourceSel = document.getElementById('sourceLang');
+  const targetSel = document.getElementById('targetLang');
+  const inputText = document.getElementById('inputText');
+  const outputText = document.getElementById('outputText');
+  const translateBtn = document.getElementById('translateBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const micBtn = document.getElementById('micBtn');
+  const speakBtn = document.getElementById('speakBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const swapBtn = document.getElementById('swapBtn');
+  const charCount = document.getElementById('charCount');
+  const waveform = document.getElementById('waveform');
+
+  function populateSelect(sel, defaultCode){
+    Object.entries(LANGUAGES).forEach(([code, label])=>{
+      const opt = document.createElement('option');
+      opt.value = code; opt.textContent = label;
+      if(code === defaultCode) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  populateSelect(sourceSel, 'en');
+  populateSelect(targetSel, 'ur');
+
+  inputText.addEventListener('input', ()=>{
+    charCount.textContent = `${inputText.value.length} chars`;
+  });
+
+  swapBtn.addEventListener('click', ()=>{
+    const s = sourceSel.value, t = targetSel.value;
+    sourceSel.value = t; targetSel.value = s;
+    const tmp = inputText.value;
+    inputText.value = outputText.value;
+    outputText.value = tmp;
+    charCount.textContent = `${inputText.value.length} chars`;
+  });
+
+  const autoDetect = document.getElementById('autoDetect');
+  const detectBadge = document.getElementById('detectBadge');
+  const historyList = document.getElementById('historyList');
+  const clearHistoryBtn = document.getElementById('clearHistory');
+
+  let history = [];
+
+  autoDetect.addEventListener('change', ()=>{
+    sourceSel.disabled = autoDetect.checked;
+    detectBadge.style.display = 'none';
+  });
+
+  function renderHistory(){
+    if(history.length === 0){
+      historyList.innerHTML = '<span class="history-empty">Your translated phrases will show up here for quick reuse.</span>';
+      return;
+    }
+    historyList.innerHTML = '';
+    history.slice(0, 6).forEach((item, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="h-top"><span>${LANGUAGES[item.src] || item.src} <span class="h-arrow">→</span> ${LANGUAGES[item.tgt] || item.tgt}</span></div>
+        <div class="h-text">${item.input}</div>
+        <div class="h-text" style="color:var(--teal);">${item.output}</div>
+      `;
+      div.addEventListener('click', ()=>{
+        inputText.value = item.input;
+        outputText.value = item.output;
+        sourceSel.value = item.src;
+        targetSel.value = item.tgt;
+        charCount.textContent = `${inputText.value.length} chars`;
+      });
+      historyList.appendChild(div);
+    });
+  }
+
+  clearHistoryBtn.addEventListener('click', ()=>{
+    history = [];
+    renderHistory();
+  });
+
+  async function translateText(){
+    const text = inputText.value.trim();
+    if(!text){
+      statusMsg.textContent = 'Type or speak something first.';
+      statusMsg.className = 'status err';
+      return;
+    }
+    const src = autoDetect.checked ? 'autodetect' : sourceSel.value;
+    const tgt = targetSel.value;
+    translateBtn.disabled = true;
+    waveform.style.display = 'flex';
+    statusMsg.className = 'status';
+    statusMsg.textContent = 'Translating...';
+
+    try{
+      // NOTE: MyMemory's free tier gives ~5000 words/day per IP with no email attached,
+      // and ~10,000/day if you attach a contact email via &de=. Add yours below to
+      // reduce "quota exceeded" failures, which is the most common cause of a language
+      // pair silently "not working" even though the request itself succeeded.
+      const CONTACT_EMAIL = ''; // e.g. 'arooj@example.com' — optional but recommended
+      const emailParam = CONTACT_EMAIL ? `&de=${encodeURIComponent(CONTACT_EMAIL)}` : '';
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${src}|${tgt}${emailParam}`;
+      const res = await fetch(url);
+      if(!res.ok){
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const data = await res.json();
+      const translated = data && data.responseData ? data.responseData.translatedText : null;
+      const isQuotaWarning = translated && /MYMEMORY WARNING|QUOTA|INVALID LANGPAIR/i.test(translated);
+      const looksLikeError = data && (data.responseStatus === 403 || data.responseStatus === 429);
+
+      if(!translated || isQuotaWarning || looksLikeError){
+        if(isQuotaWarning || looksLikeError){
+          throw new Error('QUOTA');
+        }
+        throw new Error('EMPTY');
+      }
+
+      outputText.value = translated;
+      statusMsg.textContent = 'Done.';
+
+      if(autoDetect.checked && data.responseData.detectedLanguage){
+        detectBadge.textContent = `Detected: ${data.responseData.detectedLanguage}`;
+        detectBadge.style.display = 'inline-block';
+      }
+
+      history.unshift({
+        input: text, output: translated,
+        src: autoDetect.checked ? (data.responseData.detectedLanguage || 'auto') : src,
+        tgt
+      });
+      renderHistory();
+    }catch(err){
+      if(err.message === 'QUOTA'){
+        statusMsg.textContent = 'Free translation quota hit for this language pair right now — wait a bit and try again, or try a different pair.';
+      } else if(String(err.message).includes('EMPTY')){
+        statusMsg.textContent = `No translation returned for ${LANGUAGES[src] || src} → ${LANGUAGES[tgt] || tgt} — try a shorter phrase or a different language pair.`;
+      } else {
+        statusMsg.textContent = 'Translation failed — check your connection and try again.';
+      }
+      statusMsg.className = 'status err';
+    }finally{
+      translateBtn.disabled = false;
+      waveform.style.display = 'none';
+    }
+  }
+  translateBtn.addEventListener('click', translateText);
+
+  // ---- Speech-to-Text ----
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognizer = null, isRecording = false;
+
+  const envBanner = document.getElementById('envBanner');
+  // Speech APIs (and mic access) only work in a "secure context": https://, or http://localhost.
+  // Opening the file directly (file://) or over plain http on another host will silently do nothing.
+  const isSecure = window.isSecureContext === true;
+
+  if(!isSecure){
+    envBanner.style.display = 'flex';
+    envBanner.innerHTML = '⚠️ Mic won\'t work opened directly as a file. Serve it locally (e.g. VS Code "Live Server", or <code>python -m http.server</code>) or host it on GitHub Pages, then reload over http://localhost or https://.';
+  }
+
+  if(SR && isSecure){
+    recognizer = new SR();
+    recognizer.interimResults = false;
+    recognizer.maxAlternatives = 1;
+
+    recognizer.onresult = (e)=>{
+      const transcript = e.results[0][0].transcript;
+      inputText.value = transcript;
+      charCount.textContent = `${inputText.value.length} chars`;
+    };
+    recognizer.onerror = (e)=>{
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+        statusMsg.textContent = 'Mic permission was blocked — check the site permissions (padlock icon) in your browser and allow microphone access.';
+      } else if(e.error === 'no-speech'){
+        statusMsg.textContent = 'Didn\'t catch that — try speaking again.';
+      } else {
+        statusMsg.textContent = `Could not hear you (${e.error}) — try again.`;
+      }
+      statusMsg.className = 'status err';
+    };
+    recognizer.onend = ()=>{
+      isRecording = false;
+      micBtn.classList.remove('recording');
+    };
+
+    micBtn.addEventListener('click', async ()=>{
+      if(isRecording){
+        recognizer.stop();
+        return;
+      }
+      // Explicitly ask for mic permission first — this reliably triggers the
+      // browser's permission prompt before we hand control to SpeechRecognition.
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+      }catch(permErr){
+        statusMsg.textContent = 'Microphone permission denied. Allow mic access for this page and try again.';
+        statusMsg.className = 'status err';
+        return;
+      }
+      try{
+        recognizer.lang = SPEECH_TAGS[sourceSel.value] || 'en-US';
+        recognizer.start();
+        isRecording = true;
+        micBtn.classList.add('recording');
+        statusMsg.textContent = 'Listening...';
+        statusMsg.className = 'status';
+      }catch(startErr){
+        statusMsg.textContent = 'Could not start the mic — try reloading the page.';
+        statusMsg.className = 'status err';
+      }
+    });
+  } else if(!SR){
+    micBtn.disabled = true;
+    micBtn.title = 'Voice input not supported in this browser';
+  } else {
+    micBtn.disabled = true;
+    micBtn.title = 'Mic needs https or localhost — see the notice above';
+  }
+
+  // ---- Text-to-Speech ----
+  speakBtn.addEventListener('click', ()=>{
+    const text = outputText.value.trim();
+    if(!text) return;
+    if(!window.speechSynthesis){
+      statusMsg.textContent = 'Speech playback not supported in this browser.';
+      statusMsg.className = 'status err';
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = SPEECH_TAGS[targetSel.value] || 'en-US';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  });
+
+  // ---- Copy ----
+  copyBtn.addEventListener('click', async ()=>{
+    if(!outputText.value.trim()) return;
+    try{
+      await navigator.clipboard.writeText(outputText.value);
+      statusMsg.textContent = 'Copied to clipboard.';
+      statusMsg.className = 'status';
+    }catch(e){
+      statusMsg.textContent = 'Could not copy — select and copy manually.';
+      statusMsg.className = 'status err';
+    }
+  });
+</script>
+</body>
+</html>
